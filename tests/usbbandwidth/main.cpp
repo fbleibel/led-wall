@@ -5,7 +5,7 @@
 
 using namespace std;
 const size_t PACKET_SIZE = 64;
-const size_t BUFFER_PACKETS = 100;
+const size_t BUFFER_PACKETS = 10;
 const size_t BUFFER_SIZE = PACKET_SIZE * BUFFER_PACKETS;
 
 
@@ -62,8 +62,9 @@ int main(int argc, char** argv) {
             timeval now;
             gettimeofday(&now, NULL);
             float elapsed = (now.tv_sec - start_time.tv_sec) * 1000000 + now.tv_usec - start_time.tv_usec;
-            data_rate = (float) PACKET_SIZE * packets_sent / elapsed;
-            cout << "+" << packets_sent << " packets sent (" << fixed << setprecision(2) << data_rate << " MB/s) ..." << endl;
+            data_rate = (float) PACKET_SIZE * packets_sent / elapsed; // in MB
+            data_rate *= 1024.0; // in kB
+            cout << device_name << ": " << packets_sent << " packets sent (" << fixed << setprecision(2) << data_rate << " kB/s) ..." << endl;
             start_time = now;
             packets_sent -= 10000;
         }
