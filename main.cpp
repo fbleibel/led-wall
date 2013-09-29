@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <cstdio>
+#include <iomanip>
 #include <sys/time.h>
 
 using namespace std;
@@ -14,15 +14,25 @@ int main(int argc, char** argv) {
         cout << "Must pass in a device name! e.g. /dev/ttyACM0" << endl;
         return 1;
     }
-    fstream serial;
+    ofstream serial;
+    ifstream serial_in;
+    serial.rdbuf()->pubsetbuf(0, 0);
+    serial_in.rdbuf()->pubsetbuf(0, 0);
+    
     string device_name(argv[1]);
     serial.open(device_name.c_str());
+    serial_in.open(device_name.c_str());
     if (!serial.is_open()) {
-        cout << "Error opening " << device_name << "!" << endl;
+        cout << "Error opening " << device_name << " for writing!" << endl;
         return 1;
     }
 
-    serial.ignore(-1);
+    if (!serial_in.is_open()) {
+        cout << "Error opening " << device_name << " for reading!" << endl;
+        return 1;
+    }
+
+    serial_in.ignore(-1);
     
     string data;
     data.reserve(BUFFER_SIZE);
@@ -51,21 +61,24 @@ int main(int argc, char** argv) {
             gettimeofday(&now, NULL);
             float elapsed = (now.tv_sec - start_time.tv_sec) * 1000000 + now.tv_usec - start_time.tv_usec;
             data_rate = (float) PACKET_SIZE * packets_sent / elapsed;
-            cout << "+" << packets_sent << " packets sent (" << data_rate << " MB/s)" << endl;
+            cout << "+" << packets_sent << " packets sent (" << fixed << setprecision(2) << data_rate << " MB/s) ..." << endl;
             start_time = now;
             packets_sent -= 2000;
         }
-        
-        serial.sync();
         char ack;
-        while (!serial.readsome(&ack, 1));
-        if (ack=='*'){
-            cout << "got ack!" << endl;
-        } else {
-            cout << "false alarm!" << endl;
+        string test;
+        getline(serial_in, test);
+        if (!test.empty()) cout << "ACK: " << test << endl;
+        continue;
+        if ( serial_in.readsome(&ack, 1) ) {
+            if (ack != '*') {
+                cout << "ack symbol error!" << endl;
+                return 1;
+            }
+            else {
+                cout << "ACK" << endl;
+            }
         }
-        cout << "tellg " << serial.tellg() << endl << "tellp "<< serial.tellp() << endl;
-        serial.seekg(-1);
     }
     return 0;
 }
