@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+"""Script to configure the raspberry pi
+"""
+import shutil
+
+print "Copying USB device rules for teensy"
+shutil.copy("49-teensy.rules", "/etc/udev/rules.d/")
