@@ -1,4 +1,4 @@
-This exexcutable measures the bandwidth available at the USB connection, from your computer or a raspberry Pi, say. The teensy boards should be set to continually get as much data as possible.
+This executable measures the bandwidth available at the USB connection. The teensy boards should be set to continually get as much data as possible.
 To run, first download sketch/UsbBandwidth.ino into your teensy(s). Or just read as much data as possible from the serial port! Then in this folder run::
 
     cmake .
