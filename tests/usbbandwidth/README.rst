@@ -8,5 +8,5 @@ To compile, and then run it with::
 
   ./usbbandwidth /dev/ttyACM0
 
-From the raspberry pi I have seen 262 kB/s for each teensy even when multiple ones are connected via a hub - not sure what to make of it as surely the total usb bandwidth should be limited?
-From my computer, I get about 990kB/s for all teensys together. Connecting two teensys divides the transfer rate by half.
+* From the Raspberry Pi, the bandwidth maxes out at 262 kB/s for each Teensy - adding more Teensy doesn't change their individual transfer rates.
+* From my laptop, I get about 990kB/s for all Teensys together which is reasonably close to the USB1 standard speed. Connecting two Teensys on the same USB port divides the transfer rate by half, but that doesn't happen if you connect them to different ports.
