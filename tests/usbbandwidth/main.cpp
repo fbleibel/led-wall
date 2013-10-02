@@ -15,10 +15,6 @@
 
 using namespace std;
 
-// How many packets to send to the output stream in one go. I am not sure if
-// this is any different from sending 10 packets in 10 write calls however...
-const size_t BUFFER_PACKETS = 10;
-
 /*
  * Pass in a device name e.g. usbbandwidth /dev/ttyACM0 and optionally a
  * packet size after that (e.g. usbbandwidth /dev/ttyACM0 64).
@@ -38,14 +34,13 @@ int main(int argc, char** argv) {
 
     if (argc >= 3) {
     	packet_size = atoi(argv[2]);
-    	if (packet_size == 0 || packet_size > 64) {
-    		cout << "Error: packet size must be between 1 and 64, inclusive."
-    			 << endl;
+    	if (packet_size == 0) {
+    		cout << "Error: invalid packet size" << endl;
     		return 1;
     	}
     }
 
-    int buffer_size = BUFFER_PACKETS * packet_size;
+    int buffer_size = packet_size;
 
     // Open the Teensy USB device for writing
     ofstream serial_out;
@@ -70,10 +65,10 @@ int main(int argc, char** argv) {
     timeval start_time;
     gettimeofday(&start_time, NULL);
     while ( true ) {
-    	// Write a few packets to the Teensy  board
+    	// Write one packets to the Teensy  board
         serial_out.write(data.c_str(), data.size());
         serial_out.flush();
-        packets_sent += BUFFER_PACKETS;
+        packets_sent += 1;
         
         if (serial_out.bad()) {
             cout << "Something bad happened writing!" << endl;
