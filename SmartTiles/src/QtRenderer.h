@@ -10,14 +10,15 @@
 
 #include <QApplication>
 #include "RendererBase.h"
+#include "glwidget.h"
 
 namespace smart_tiles {
 
-class QtRenderer : public RendererBase {
+class QtOpenGLRenderer : public RendererBase {
 public:
   // On initialisation, creates a GUI QApplication.
-	QtRenderer(int argc, char** argv);
-	virtual ~QtRenderer();
+	QtOpenGLRenderer(int argc, char** argv);
+	virtual ~QtOpenGLRenderer();
 
 	// Set up the various components of this renderer. This will create a
 	// QGLWidget and show() it.
@@ -34,6 +35,7 @@ public:
 
 protected:
 	QApplication* app_;
+	GlWidget* view_;
 };
 
 } /* namespace smart_tiles */

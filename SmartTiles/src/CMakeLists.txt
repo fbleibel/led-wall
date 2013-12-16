@@ -4,8 +4,8 @@ PROJECT(SmartTilesQt)
 FIND_PACKAGE(Qt4 REQUIRED)
 SET(QT_USE_QTOPENGL TRUE)
 
-SET(SmartTilesQt_SOURCES QtRenderer.cpp RendererBase.cpp SmartTilesApp.cpp)
-SET(SmartTilesQt_HEADERS QtRenderer.h RendererBase.h SmartTilesApp.h)
+SET(SmartTilesQt_SOURCES QtRenderer.cpp RendererBase.cpp SmartTilesApp.cpp glwidget.cpp)
+SET(SmartTilesQt_HEADERS glwidget.h)
 
 INCLUDE(${QT_USE_FILE})
 ADD_DEFINITIONS(${QT_DEFINITIONS})

@@ -14,6 +14,7 @@ namespace smart_tiles {
 class SmartTilesApp {
 public:
 	SmartTilesApp(int argc, char** argv);
+	void Run();
 	virtual ~SmartTilesApp();
 protected:
 	RendererBase* renderer_;

@@ -21,21 +21,21 @@ public:
   // a rectangular surface of num_leds_x * num_leds_y - the raw pixel data that
   // will be sent to the LEDs.
   virtual void Setup(int num_leds_x, int num_leds_y, int display_width,
-    int display_height);
+    int display_height) = 0;
 
   // Initialises and add a Simulator to the renderer. The simulator displays
   // what the LED boards will look like and draws display_width * display_height
   // frames.
-  virtual void AddSimulator();
+  virtual void AddSimulator() = 0;
 
   // Remove the simulator. Drawing now occurs on a display surface of num_leds_x
   // * num_leds_y pixels.
-  virtual void RemoveSimulator();
+  virtual void RemoveSimulator() = 0;
 
   bool using_simulator() { return bool(simulator_); }
 
   // Render an image into the OpenGL buffer.
-  virtual void Render();
+  virtual void Render() = 0;
 
 protected:
   // The dimensions of the LED board
