@@ -71,7 +71,7 @@
 #define LED_HEIGHT     16   // number of LEDs vertically (must be multiple of 8)
 #define LED_LAYOUT     0    // 0 = even rows left->right, 1 = even rows right->left
 #define LED_OFFSET_X   0
-#define LED_OFFSET_Y   0
+#define LED_OFFSET_Y   12
 #define NUM_PORTS_USED 8
 
 const int ledsPerStrip = LED_WIDTH * LED_HEIGHT / 8; // = 72 * 2

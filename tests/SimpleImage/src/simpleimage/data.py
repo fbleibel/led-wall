@@ -159,9 +159,9 @@ class OctoWS281XImageData(object):
                         pixel[i] = 0x000000
                     else:
                         # fetch 8 pixels from the image, 1 for each pin
-                        rgb = image.pixel(
-                            x + self._led_offset_x,
-                            y + self._led_offset_y + rowsPerPin * i)
+                        image_x = x + self._led_offset_x
+                        image_y = y + self._led_offset_y + rowsPerPin * i
+                        rgb = image.pixel(image_x, image_y)
                         pixel[i] = self._colorWiring(rgb)
                 # convert 8 pixels to 24 bytes
                 for bit_index in xrange(23, -1, -1):

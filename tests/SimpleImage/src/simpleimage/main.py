@@ -99,6 +99,7 @@ def main():
             device_name = "/dev/ttyACM{0}".format(i)
             if os.path.exists(device_name):
                 devices.append(device_name)
+        print "Found {0} terminal devices to connect to.".format(len(devices))
     return process(args.path, devices)
     
 if __name__ == "__main__":
