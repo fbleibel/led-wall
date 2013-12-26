@@ -28,6 +28,10 @@ THE SOFTWARE.
 """
 import struct
 
+class OctoWS281XImageDataError(Exception):
+    """Base class for exceptions raised in this module.
+    """
+    
 
 class LedLayout(object):
     """Used when converting an image rectangle to individual LED data for each
@@ -77,7 +81,13 @@ class OctoWS281XImageData(object):
     in that case, the program "OctoWS2811VideoDisplay" must be set on the
     board.
     """
-    def __init__(self, led_width, led_height, layout=LedLayout.LeftToRight):
+    def __init__(self,
+                 led_width,
+                 led_height,
+                 layout=LedLayout.LeftToRight,
+                 led_offset_x=0,
+                 led_offset_y=0,
+                 num_ports_used=8):
         """
         :Args:
             led_width:
@@ -88,10 +98,27 @@ class OctoWS281XImageData(object):
                 in the OctoWS2811 arduino sketch.
             layout:
                 Strip layout. One of the public members of `LedLayout`.
+            led_offset_x, led_offset_y:
+                Horizontal and vertical offsets: identifies the top-left corner
+                of the image to read, in the source image.
+            num_ports_used:
+                How many ports are actually connected on the teensy. Defaults to
+                8 (all available ports are used). It is assumed that 'LED' ports
+                (strips) 1 through num_ports_used are connected, and higher
+                indices are not. Image lines corresponding to unused ports will
+                not be read. 
+        Note: led_width and led_height *must* match what is set on the teensy
+        board, or no data will be displayed.
         """
+        if led_height % 8 != 0:
+            raise OctoWS281XImageDataError("Bad LED height specified! Expecting"
+                                           " a multiple of 8.")
         self._led_width = led_width
         self._led_height = led_height
         self._layout = layout
+        self._led_offset_x = led_offset_x
+        self._led_offset_y = led_offset_y
+        self._num_ports_used = num_ports_used
         
     def toByteArray(self, image):
         """
@@ -103,6 +130,9 @@ class OctoWS281XImageData(object):
                 any object with a pixel(x, y) method that returns a (integral)
                 RGB value. x values range from 0 to led_width - 1, y values from
                 0 to led_height - 1.
+        
+        Note: this function is quite slow (takes 10-20ms for a small image for
+        me). Use C?
         """
         data = bytearray()
         rowsPerPin = self._led_height / 8
@@ -114,7 +144,7 @@ class OctoWS281XImageData(object):
                 # even numbered rows are left to right
                 xbegin = 0
                 xend = self._led_width
-                xinc = 1;
+                xinc = 1
             else:
                 # odd numbered rows are right to left
                 xbegin = self._led_width - 1
@@ -123,12 +153,19 @@ class OctoWS281XImageData(object):
               
             for x in xrange(xbegin, xend, xinc):
                 for i in xrange(8):
-                    # fetch 8 pixels from the image, 1 for each pin
-                    rgb = image.pixel(x, y + rowsPerPin * i);
-                    pixel[i] = self._colorWiring(rgb);
+                    if i >= self._num_ports_used:
+                        # There is no strip connected. But we still have to
+                        # provide data for it.
+                        pixel[i] = 0x000000
+                    else:
+                        # fetch 8 pixels from the image, 1 for each pin
+                        rgb = image.pixel(
+                            x + self._led_offset_x,
+                            y + self._led_offset_y + rowsPerPin * i)
+                        pixel[i] = self._colorWiring(rgb)
                 # convert 8 pixels to 24 bytes
-                for byte_index in xrange(23, -1, -1):
-                    mask = 1 << byte_index
+                for bit_index in xrange(23, -1, -1):
+                    mask = 1 << bit_index
                     b = 0
                     for i in xrange(8):
                         if pixel[i] & mask:
@@ -137,7 +174,7 @@ class OctoWS281XImageData(object):
         return data
     
     def send(self,
-             image,
+             data,
              destination,
              delay_us=0,
              trigger=DisplayTrigger.AfterFirstByteWithDelay):
@@ -145,9 +182,8 @@ class OctoWS281XImageData(object):
         Convenience function to send image data to an opened file or device.
         
         :Args:
-            image:
-                As in toByteArray(), any object with a pixel(x, y) -> int
-                method.
+            data:
+                Data returned by self.toByteArray().
             destination:
                 An opened file or device, i.e. any object with a write()
                 method.
@@ -160,13 +196,12 @@ class OctoWS281XImageData(object):
                 public members of the `DisplayTrigger` enumeration. Controls
                 the timing of the frame sending.
         """
-        data = self.toByteArray(image)
         # Little-endian, short.
         delay_us_bytes = struct.pack("<h", delay_us)
-        file.write(trigger)
-        file.write(delay_us_bytes)
-        file.write(data)
-        file.flush()
+        destination.write(trigger)
+        destination.write(delay_us_bytes)
+        destination.write(data)
+        destination.flush()
         
     def _colorWiring(self, c):
         """Translate the 24 bit color from RGB to the actual
