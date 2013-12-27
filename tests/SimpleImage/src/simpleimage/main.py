@@ -4,7 +4,7 @@ import sys
 import time
 from argparse import ArgumentParser
 from PyQt4 import QtCore, QtGui
-from simpleimage.data import OctoWS281XImageData
+from simpleimage.data import OctoWS281XImageData, DisplayTrigger
 
 # Pixels per row
 NUM_PIXELS_H = 72
@@ -34,7 +34,7 @@ def process(path, device_names):
         image = image.scaled(NUM_PIXELS_H, NUM_PIXELS_V)
     
     
-    for device_name in device_names:
+    for device_index, device_name in enumerate(device_names):
         # Must open two files, one for reading and one for writing.
         # Use universal newline support - arduino's serial ends lines with \r\n. 
         serial_in = open(device_name, "rU")
@@ -70,8 +70,13 @@ def process(path, device_names):
             print "\tComputed image data in {0:.1f}ms".format(
                 1000 * (time.time() - start))
             start = time.time()
+            # The first teensy board will send the frame sync signal.
+            if device_index == 0:
+                trigger = DisplayTrigger.AfterFirstByteWithDelay
+            else:
+                trigger = DisplayTrigger.OnFrameSync
             # Wait 10ms before frame sync
-            image_data.send(data, serial_out, 10000)
+            image_data.send(data, serial_out, 10000, trigger)
             serial_out.flush()
             print "\tFrame sent in {0:.1f}ms\n".format(
                 1000 * (time.time() - start))
@@ -100,6 +105,8 @@ def main():
             if os.path.exists(device_name):
                 devices.append(device_name)
         print "Found {0} terminal devices to connect to.".format(len(devices))
+    if len(devices) == 0:
+        print "Dry run..."
     return process(args.path, devices)
     
 if __name__ == "__main__":
