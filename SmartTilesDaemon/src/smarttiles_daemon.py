@@ -24,9 +24,11 @@ import json
 import re
 import subprocess
 import socket
+import select
 import SimpleHTTPServer
 import SocketServer
 import sys
+import time
 import traceback
 
 LOG_DIR = "/var/log/smart-tiles"
@@ -147,8 +149,11 @@ class SmartTilesApp(object):
         
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
         while True:
-            self.http_server.handle_request()
-
+            try:
+                self.http_server.handle_request()
+            except select.error:
+                # We may not be connected yet. If not, wait for a bit.
+                time.sleep(5)
             now = datetime.now()
             # Send regular heartbeat messages
             if now > self.next_heartbeat:
