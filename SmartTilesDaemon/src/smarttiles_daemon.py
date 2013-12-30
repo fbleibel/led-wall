@@ -121,18 +121,27 @@ class SmartTilesApp(object):
             self.log.info("Sending: {0}".format(msg.get_payload()))
             smtp.sendmail(self.user, [self.user], msg.as_string())
             smtp.quit()
+            self.log.info("Send successful.")
         except (socket.error, socket.gaierror):
             # Fail silently
             traceback.print_exc()
+            return False
+        return False
     
     def run(self):
         """Run in an infinite loop - this process will usually be killed with
         SIGKILL.
         """
         # Tell the world we're starting up
-        self.send_mail("Ready to go! My addresses are {0}".format(
-            ", ".join(self._get_ifconfig_addrs())))
-        self.last_heartbeat = datetime.now()
+        addrs = self._get_ifconfig_addrs()
+        msg = "Ready to go! My addresses are {0}".format(", ".join(addrs))
+        if self.send_mail(msg):
+            self.next_heartbeat = datetime.now() + self.heartbeat_period
+        else:
+            # Try again in 30 seconds
+            self.next_heartbeat = datetime.now() + timedelta(seconds=30)
+            self.log.error("Sending heartbeat failed, retrying in 30"
+                           " seconds...")
         
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
         while True:
@@ -140,11 +149,11 @@ class SmartTilesApp(object):
 
             now = datetime.now()
             # Send regular heartbeat messages
-            if now - self.last_heartbeat > self.heartbeat_period:
+            if now > self.next_heatbeat:
                 self.send_mail("I am still alive! My IP addresses "
                 "are {0}. Love, smart-tiles.".format(
                 ", ".join(self._get_ifconfig_addrs())))
-                self.last_heartbeat = now
+                self.next_heartbeat = now + self.heartbeat_period
             
 def main():
     """
