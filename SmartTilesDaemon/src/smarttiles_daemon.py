@@ -55,6 +55,7 @@ class SmartTilesApp(object):
     def __init__(self, logstdout=True, port=80):
         """
         """
+        self.port = port
         # Daemon configuration: use a PID lock file.
         self.pidfile_path =  '/var/run/smart-tiles.pid'
         self.pidfile_timeout = 5
@@ -92,7 +93,7 @@ class SmartTilesApp(object):
         self.html_root = os.path.expanduser(self.html_root)
         os.chdir(self.html_root)
         self.http_server = SocketServer.TCPServer(
-            ("", port), SmartTilesRequestHandler)
+            ("", self.port), SmartTilesRequestHandler)
         
         self.log.info("Starting smart-tiles program. Serving files from {0} at "
                       "localhost:{1}".format(self.html_root, port))
@@ -155,6 +156,8 @@ class SmartTilesApp(object):
                 traceback.print_exc()
                 # We may not be connected yet. If not, wait for a bit.
                 time.sleep(5)
+                self.http_server = SocketServer.TCPServer(
+                    ("", self.port), SmartTilesRequestHandler)
             now = datetime.now()
             # Send regular heartbeat messages
             if now > self.next_heartbeat:
