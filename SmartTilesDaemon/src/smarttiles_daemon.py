@@ -97,6 +97,8 @@ class SmartTilesApp(object):
         
         # Send heartbeat messages regularly
         self.heartbeat_period = timedelta(minutes=30)
+        # 10 seconds timeout for select on http requests
+        self.http_server.timeout = 10
         
     def _get_ifconfig_addrs(self):
         """Returns the list of all ipv4 addresses found in "ifconfig".
@@ -126,7 +128,7 @@ class SmartTilesApp(object):
             # Fail silently
             traceback.print_exc()
             return False
-        return False
+        return True
     
     def run(self):
         """Run in an infinite loop - this process will usually be killed with
@@ -149,7 +151,7 @@ class SmartTilesApp(object):
 
             now = datetime.now()
             # Send regular heartbeat messages
-            if now > self.next_heatbeat:
+            if now > self.next_heartbeat:
                 self.send_mail("I am still alive! My IP addresses "
                 "are {0}. Love, smart-tiles.".format(
                 ", ".join(self._get_ifconfig_addrs())))
