@@ -11,15 +11,17 @@
         width: 100%;
         height: 100%;
     }
-    tr {
-        width: 100%;
+    .vpadding {
+        height: 20%;
+    }
+    .hpadding {
+        width: 20%;
     }
     td {
         text-align: center;
-        vertical-align: center;
+        vertical-align: middle;
     }
-    .bigred, .bigred-disabled {
-        vertical-align: center;
+    .bigred-background, .bigred-background-disabled {
         -moz-box-shadow:inset 0px 1px 0px 0px #f5978e;
         -webkit-box-shadow:inset 0px 1px 0px 0px #f5978e;
         box-shadow:inset 0px 1px 0px 0px #f5978e;
@@ -41,60 +43,59 @@
         border-bottom-left-radius:20px;
         text-indent:0;
         border:1px solid #d02718;
-        display:inline-block;
-        color:#ffffff;
+    }
+    .bigred-text, .bigred-text-disabled {
         font-family:Times New Roman;
-        font-size:15px;
+        font-size:100pt;
         font-weight:bold;
         font-style:normal;
-        height:65px;
-        line-height:65px;
-        width:80px;
+        line-height:200pt;
+
         text-decoration:none;
         text-align:center;
         text-shadow:1px 1px 0px #810e05;
+        display:inline-block;
+        color:#ffffff;
     }
-    .bigred-disabled {
+    .bigred-background-disabled {
         background: grey;
         border: darkgrey;
-        box-shadow: grey;
+        box-shadow:inset 0px 1px 0px 0px grey;
         -moz-box-shadow:inset 0px 1px 0px 0px grey;
         -webkit-box-shadow:inset 0px 1px 0px 0px grey;
-        text-shadow: 1px 1px 0px black;
     }
-    .bigred:hover {
-        background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #c62d1f), color-stop(1, #f24537) );
-        background:-moz-linear-gradient( center top, #c62d1f 5%, #f24537 100% );
-        filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#c62d1f', endColorstr='#f24537');
-        background-color:#c62d1f;
-    }
-    .bigred-disabled:hover {
+    .bigred-background-disabled:hover {
         background: grey;
     }
-    .bigred:active {
+    .bigred-background:active {
         position:relative;
         top:1px;
+    }
+    .bigred-text-disabled {
+        text-shadow: 1px 1px 0px black;
     }
     </style>
     <script>
     function startIt() {
-        $.ajax({url: "index.htm",
+        $.ajax({url: "",
                 type: "POST",
                 dataType:"text",
                 success: started});
     }
     function started() {
-        var button = $(".bigred");
-        button.prop("disabled", true);
-        button.addClass("bigred-disabled");
-        button.removeClass("disabled");
-        button.click(function(e){
+        var bigred = $(".bigred-background");
+        bigred.addClass("bigred-background-disabled");
+        bigred.removeClass("bigred-background");
+        var bigredtext = $(".bigred-text");
+        bigredtext.removeClass("bigred-text");
+        bigredtext.addClass("bigred-text-disabled");
+        $("#doit").click(function(e){
           e.preventDefault();
           return false;
         });
     }
     function readyFn() {
-        $('.bigred').click(startIt);
+        $('#doit').click(startIt);
     }
     $(document).ready(readyFn);
     </script>
@@ -102,9 +103,17 @@
 </head>
 <body>
     <table>
-    <tr><td>
-        <a href="#" class="bigred">Press me!</a>
-    </td></tr>
+    <tr class="vpadding"></tr>
+    <tr>
+        <td class="hpadding"></td>
+        <td class="bigred-background">
+            <a href="#" class="bigred-text" id="doit">
+                <table><tr><td class="bigred-text">Press me!</td></tr></table>
+            </a>
+        </td>
+        <td class="hpadding"></td>
+    </tr>
+    <tr class="vpadding"></tr>
     </table>
     <form method="post">
     </form>
