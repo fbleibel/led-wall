@@ -23,7 +23,12 @@ from datetime import datetime, timedelta
 import json
 import re
 import subprocess
-import time
+import SimpleHTTPServer
+import SocketServer
+import sys
+
+# Location of files to serve via html
+HTML_ROOT = "../html"
 
 LOG_DIR = "/var/log/smart-tiles"
 EMAIL_CONFIG_FILE = "smart-tiles-email-config"
@@ -33,7 +38,7 @@ class SmartTilesApp(object):
     """
     Our main app instance. Call run() to start the server.
     """
-    def __init__(self):
+    def __init__(self, logstdout=True):
         """
         """
         # Daemon configuration: use a PID lock file.
@@ -45,12 +50,10 @@ class SmartTilesApp(object):
         self.stderr_path = '/var/log/smart-tiles/stderr'
         self.log = logging.getLogger("smart-tiles")
 
-        import sys
-        hdlr = logging.StreamHandler(sys.stdout)
-        self.log.addHandler(hdlr)
-        self.log.setLevel(10)
-        
-        self.log.info("Starting smart-tiles program")
+        if logstdout:
+            handler = logging.StreamHandler(sys.stdout)
+            self.log.addHandler(handler)
+            self.log.setLevel(logging.DEBUG)
         
         # Read configuration
         config_loaded = False
@@ -70,6 +73,13 @@ class SmartTilesApp(object):
             raise RuntimeError("No config file {0} found!".format(
                 EMAIL_CONFIG_FILE))
                 
+        os.chdir(HTML_ROOT)
+        self.http_server = SocketServer.TCPServer(
+            ("", 80), SimpleHTTPServer.SimpleHTTPRequestHandler)
+        
+        self.log.info("Starting smart-tiles program. Serving files at "
+                      "localhost:80")
+        
         # Send heartbeat messages regularly
         self.heartbeat_period = timedelta(minutes=30)
         
@@ -107,10 +117,9 @@ class SmartTilesApp(object):
         
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
         while True:
-            # Don't take too much processor time           
-            time.sleep(0.5)
+            self.http_server.handle_request()
+
             now = datetime.now()
-        
             # Send regular heartbeat messages
             if now - self.last_heartbeat > self.heartbeat_period:
                 self.send_mail("I am still alive! My IP addresses "
@@ -136,7 +145,7 @@ def main():
     logger.addHandler(console)
     
     # Start daemon
-    app = SmartTilesApp()
+    app = SmartTilesApp(logstdout=False)
     daemon_runner = runner.DaemonRunner(app)
     daemon_runner.do_action()
 
