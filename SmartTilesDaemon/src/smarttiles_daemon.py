@@ -15,6 +15,8 @@ Suggested set-up: symlink this file to /etc/init.d/smart-tiles, and use
 'sudo update-rc.d smart-tiles defaults' to register as a start-up daemon.
 """
 from daemon import runner
+from email.mime.text import MIMEText
+import smtplib
 import logging
 import os
 from datetime import datetime, timedelta
@@ -24,7 +26,8 @@ import subprocess
 import time
 
 LOG_DIR = "/var/log/smart-tiles"
-EMAIL_CONFIG_FILE = "/etc/smart-tiles-email-config"
+EMAIL_CONFIG_FILE = "smart-tiles-email-config"
+EMAIL_CONFIG_DIRS = ["/etc", "."]
 
 class SmartTilesApp(object):
     """
@@ -33,7 +36,7 @@ class SmartTilesApp(object):
     def __init__(self):
         """
         """
-        # Daemon configuration
+        # Daemon configuration: use a PID lock file.
         self.pidfile_path =  '/var/run/smart-tiles.pid'
         self.pidfile_timeout = 5
         self.stdin_path = '/dev/null'
@@ -41,11 +44,32 @@ class SmartTilesApp(object):
         self.stdout_path = '/var/log/smart-tiles/stdout'
         self.stderr_path = '/var/log/smart-tiles/stderr'
         self.log = logging.getLogger("smart-tiles")
+
+        import sys
+        hdlr = logging.StreamHandler(sys.stdout)
+        self.log.addHandler(hdlr)
+        self.log.setLevel(10)
+        
+        self.log.info("Starting smart-tiles program")
         
         # Read configuration
-        with open(EMAIL_CONFIG_FILE, "r") as file_:
-            self.config = json.load(file_)
-            
+        config_loaded = False
+        for root in EMAIL_CONFIG_DIRS:
+            config_path = os.path.join(root, EMAIL_CONFIG_FILE)
+            if not os.path.exists(config_path):
+                continue
+            with open(config_path, "r") as file_:
+                config = json.load(file_)
+                # Read config
+                self.user = config["user"]
+                self.password = config["password"]
+                self.smtp_server = config["smtp-server"]
+                config_loaded = True
+        
+        if not config_loaded:
+            raise RuntimeError("No config file {0} found!".format(
+                EMAIL_CONFIG_FILE))
+                
         # Send heartbeat messages regularly
         self.heartbeat_period = timedelta(minutes=30)
         
@@ -58,30 +82,44 @@ class SmartTilesApp(object):
         addrs = re.findall("inet addr:(\d+\.\d+\.\d+\.\d+)\s", stdout)
         return addrs
     
+    def send_mail(self, contents):
+        """Connect to the specified SMTP server using SSL
+        """
+        self.log.info("Connecting to SMTP server {0}".format(self.smtp_server))
+        smtp = smtplib.SMTP_SSL(self.smtp_server)
+        smtp.login(self.user, self.password)
+        msg = MIMEText(contents)
+        msg["Subject"] = "Smart-tiles Heartbeat"
+        msg["From"] = self.user
+        msg["To"] = self.user
+        self.log.info("Sending: {0}".format(msg.get_payload()))
+        smtp.sendmail(self.user, [self.user], msg.as_string())
+        smtp.quit()
+    
     def run(self):
         """Run in an infinite loop - this process will usually be killed with
         SIGKILL.
         """
         # Tell the world we're starting up
-        self.email_feed.send_heartbeat("Ready to go!".format(
+        self.send_mail("Ready to go! My addresses are {0}".format(
             ", ".join(self._get_ifconfig_addrs())))
         self.last_heartbeat = datetime.now()
         
-        # Note: you must kill (e.g. Ctrl+C) pipumpkin to terminate it.
+        # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
         while True:
-            # Don't take too much processor time if we're not speaking                    
+            # Don't take too much processor time           
             time.sleep(0.5)
             now = datetime.now()
         
             # Send regular heartbeat messages
             if now - self.last_heartbeat > self.heartbeat_period:
-                self.email_feed.send_heartbeat("I am still alive! My IP addresses "
+                self.send_mail("I am still alive! My IP addresses "
                 "are {0}. Love, smart-tiles.".format(
                 ", ".join(self._get_ifconfig_addrs())))
                 self.last_heartbeat = now
             
 def main():
-    """Use a PID lock file.
+    """
     """
     # Set-up file logger
     logger = logging.getLogger("smart-tiles")
