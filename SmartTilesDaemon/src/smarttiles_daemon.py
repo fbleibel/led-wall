@@ -23,9 +23,11 @@ from datetime import datetime, timedelta
 import json
 import re
 import subprocess
+import socket
 import SimpleHTTPServer
 import SocketServer
 import sys
+import traceback
 
 LOG_DIR = "/var/log/smart-tiles"
 EMAIL_CONFIG_FILE = "smart-tiles-config"
@@ -108,24 +110,28 @@ class SmartTilesApp(object):
     def send_mail(self, contents):
         """Connect to the specified SMTP server using SSL
         """
-        self.log.info("Connecting to SMTP server {0}".format(self.smtp_server))
-        smtp = smtplib.SMTP_SSL(self.smtp_server)
-        smtp.login(self.user, self.password)
-        msg = MIMEText(contents)
-        msg["Subject"] = "Smart-tiles Heartbeat"
-        msg["From"] = self.user
-        msg["To"] = self.user
-        self.log.info("Sending: {0}".format(msg.get_payload()))
-        smtp.sendmail(self.user, [self.user], msg.as_string())
-        smtp.quit()
+        try:
+            self.log.info("Connecting to SMTP server {0}".format(self.smtp_server))
+            smtp = smtplib.SMTP_SSL(self.smtp_server)
+            smtp.login(self.user, self.password)
+            msg = MIMEText(contents)
+            msg["Subject"] = "Smart-tiles Heartbeat"
+            msg["From"] = self.user
+            msg["To"] = self.user
+            self.log.info("Sending: {0}".format(msg.get_payload()))
+            smtp.sendmail(self.user, [self.user], msg.as_string())
+            smtp.quit()
+        except (socket.error, socket.gaierror):
+            # Fail silently
+            traceback.print_exc()
     
     def run(self):
         """Run in an infinite loop - this process will usually be killed with
         SIGKILL.
         """
         # Tell the world we're starting up
-        #self.send_mail("Ready to go! My addresses are {0}".format(
-        #    ", ".join(self._get_ifconfig_addrs())))
+        self.send_mail("Ready to go! My addresses are {0}".format(
+            ", ".join(self._get_ifconfig_addrs())))
         self.last_heartbeat = datetime.now()
         
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
