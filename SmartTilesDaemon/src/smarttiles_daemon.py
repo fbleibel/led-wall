@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ### BEGIN INIT INFO
 # Provides:          smart-tiles
-# Required-Start:    $remote_fs $syslog $networking $ntp
+# Required-Start:    $remote_fs $syslog $networking $ntp $mountall
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
