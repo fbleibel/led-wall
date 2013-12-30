@@ -122,7 +122,7 @@ void loop() {
 //         frames are not played quickly if time as elapsed since
 //         startup or prior video playing.
 //   
-//   '?' = Query teensy index.
+//   '?' = Query teensy information.
 //
   int startChar = Serial.read();
 
