@@ -34,11 +34,23 @@ LOG_DIR = "/var/log/smart-tiles"
 EMAIL_CONFIG_FILE = "smart-tiles-email-config"
 EMAIL_CONFIG_DIRS = ["/etc", "."]
 
+
+class SmartTilesRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    """
+    """
+    def do_POST(self):
+        f = self.send_head()
+        if f:
+            self.copyfile(f, self.wfile)
+            self.wfile.write("Success!")
+            f.close()
+        print "action!"
+
 class SmartTilesApp(object):
     """
     Our main app instance. Call run() to start the server.
     """
-    def __init__(self, logstdout=True):
+    def __init__(self, logstdout=True, port=80):
         """
         """
         # Daemon configuration: use a PID lock file.
@@ -75,10 +87,10 @@ class SmartTilesApp(object):
                 
         os.chdir(HTML_ROOT)
         self.http_server = SocketServer.TCPServer(
-            ("", 80), SimpleHTTPServer.SimpleHTTPRequestHandler)
+            ("", port), SmartTilesRequestHandler)
         
         self.log.info("Starting smart-tiles program. Serving files at "
-                      "localhost:80")
+                      "localhost:{0}".format(port))
         
         # Send heartbeat messages regularly
         self.heartbeat_period = timedelta(minutes=30)
@@ -111,8 +123,8 @@ class SmartTilesApp(object):
         SIGKILL.
         """
         # Tell the world we're starting up
-        self.send_mail("Ready to go! My addresses are {0}".format(
-            ", ".join(self._get_ifconfig_addrs())))
+        #self.send_mail("Ready to go! My addresses are {0}".format(
+        #    ", ".join(self._get_ifconfig_addrs())))
         self.last_heartbeat = datetime.now()
         
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
