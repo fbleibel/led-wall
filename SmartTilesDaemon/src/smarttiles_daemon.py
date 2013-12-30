@@ -92,9 +92,8 @@ class SmartTilesApp(object):
         # Location of files to serve via html
         self.html_root = os.path.expanduser(self.html_root)
         os.chdir(self.html_root)
-        self.http_server = SocketServer.TCPServer(
-            ("", self.port), SmartTilesRequestHandler)
         
+        self.http_server = None
         self.log.info("Starting smart-tiles program. Serving files from {0} at "
                       "localhost:{1}".format(self.html_root, port))
         
@@ -150,14 +149,17 @@ class SmartTilesApp(object):
         
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
         while True:
+            if not self.http_server:
+                self.http_server = SocketServer.TCPServer(
+                    ("", self.port), SmartTilesRequestHandler)
+        
             try:
                 self.http_server.handle_request()
             except select.error:
                 traceback.print_exc()
                 # We may not be connected yet. If not, wait for a bit.
                 time.sleep(5)
-                self.http_server = SocketServer.TCPServer(
-                    ("", self.port), SmartTilesRequestHandler)
+                self.http_server = None
             now = datetime.now()
             # Send regular heartbeat messages
             if now > self.next_heartbeat:
