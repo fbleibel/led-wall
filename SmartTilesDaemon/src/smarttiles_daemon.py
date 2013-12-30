@@ -27,11 +27,8 @@ import SimpleHTTPServer
 import SocketServer
 import sys
 
-# Location of files to serve via html
-HTML_ROOT = "../html"
-
 LOG_DIR = "/var/log/smart-tiles"
-EMAIL_CONFIG_FILE = "smart-tiles-email-config"
+EMAIL_CONFIG_FILE = "smart-tiles-config"
 EMAIL_CONFIG_DIRS = ["/etc", "."]
 
 
@@ -45,6 +42,7 @@ class SmartTilesRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             self.wfile.write("Success!")
             f.close()
         print "action!"
+
 
 class SmartTilesApp(object):
     """
@@ -79,18 +77,21 @@ class SmartTilesApp(object):
                 self.user = config["user"]
                 self.password = config["password"]
                 self.smtp_server = config["smtp-server"]
+                self.html_root = config["html-root"]
                 config_loaded = True
         
         if not config_loaded:
             raise RuntimeError("No config file {0} found!".format(
                 EMAIL_CONFIG_FILE))
-                
-        os.chdir(HTML_ROOT)
+
+        # Location of files to serve via html
+        self.html_root = os.path.expanduser(self.html_root)
+        os.chdir(self.html_root)
         self.http_server = SocketServer.TCPServer(
             ("", port), SmartTilesRequestHandler)
         
-        self.log.info("Starting smart-tiles program. Serving files at "
-                      "localhost:{0}".format(port))
+        self.log.info("Starting smart-tiles program. Serving files from {0} at "
+                      "localhost:{1}".format(self.html_root, port))
         
         # Send heartbeat messages regularly
         self.heartbeat_period = timedelta(minutes=30)
