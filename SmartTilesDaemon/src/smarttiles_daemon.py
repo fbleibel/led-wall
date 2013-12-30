@@ -91,7 +91,6 @@ class SmartTilesApp(object):
 
         # Location of files to serve via html
         self.html_root = os.path.expanduser(self.html_root)
-        os.chdir(self.html_root)
         
         self.http_server = None
         self.log.info("Starting smart-tiles program. Serving files from {0} at "
@@ -134,6 +133,9 @@ class SmartTilesApp(object):
         """Run in an infinite loop - this process will usually be killed with
         SIGKILL.
         """
+        # Simple web server will serve files from the current directory
+        os.chdir(self.html_root)
+        
         # Tell the world we're starting up
         addrs = self._get_ifconfig_addrs()
         msg = "Ready to go! My addresses are {0}".format(", ".join(addrs))
