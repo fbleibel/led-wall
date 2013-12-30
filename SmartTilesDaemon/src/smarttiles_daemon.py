@@ -152,6 +152,7 @@ class SmartTilesApp(object):
             try:
                 self.http_server.handle_request()
             except select.error:
+                traceback.print_exc()
                 # We may not be connected yet. If not, wait for a bit.
                 time.sleep(5)
             now = datetime.now()
