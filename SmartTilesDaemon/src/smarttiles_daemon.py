@@ -99,8 +99,6 @@ class SmartTilesApp(object):
         
         # Send heartbeat messages regularly
         self.heartbeat_period = timedelta(minutes=30)
-        # 10 seconds timeout for select on http requests
-        self.http_server.timeout = 10
         
     def _get_ifconfig_addrs(self):
         """Returns the list of all ipv4 addresses found in "ifconfig".
@@ -152,6 +150,7 @@ class SmartTilesApp(object):
             if not self.http_server:
                 self.http_server = SocketServer.TCPServer(
                     ("", self.port), SmartTilesRequestHandler)
+                self.http_server.timeout = 10
         
             try:
                 self.http_server.handle_request()
