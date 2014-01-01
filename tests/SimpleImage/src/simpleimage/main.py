@@ -71,12 +71,12 @@ def process(path, device_names):
                 1000 * (time.time() - start))
             start = time.time()
             # The first teensy board will send the frame sync signal.
-            if device_index == 0:
-                trigger = DisplayTrigger.AfterFirstByteWithDelay
-            else:
-                trigger = DisplayTrigger.OnFrameSync
+            #if device_index == 0:
+            trigger = DisplayTrigger.AfterFirstByteWithDelay
+#             else:
+#                 trigger = DisplayTrigger.OnFrameSync
             # Wait 10ms before frame sync
-            image_data.send(data, serial_out, 10000, trigger)
+            image_data.send(data, serial_out, 0, trigger)
             serial_out.flush()
             print "\tFrame sent in {0:.1f}ms\n".format(
                 1000 * (time.time() - start))

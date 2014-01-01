@@ -133,8 +133,6 @@ class SmartTilesApp(object):
         """Run in an infinite loop - this process will usually be killed with
         SIGKILL.
         """
-        # Simple web server will serve files from the current directory
-        os.chdir(self.html_root)
         
         # Tell the world we're starting up
         addrs = self._get_ifconfig_addrs()
@@ -150,6 +148,8 @@ class SmartTilesApp(object):
         # Note: you must kill (e.g. Ctrl+C) this app to terminate it.
         while True:
             if not self.http_server:
+                # Simple web server will serve files from the current directory
+                os.chdir(self.html_root)
                 self.http_server = SocketServer.TCPServer(
                     ("", self.port), SmartTilesRequestHandler)
                 self.http_server.timeout = 10
